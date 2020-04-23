@@ -22,17 +22,38 @@ class Game
 
     def load_dictionary
         if @player.language == "Spanish"
-            @dictionary = File.readlines "hangman/listado.txt"
+            @dictionary = File.readlines "listado.txt"
         else
-            @dictionary = File.readlines "hangman/5desk.txt"
+            @dictionary = File.readlines "5desk.txt"
         end
 
     end
 
     def play
+        flag = false
+        aux_2 = []
+
         load_dictionary
         @player_word = @dictionary.sample
-        puts @player_word
+        aux = @player_word.split("")
+        aux.delete("\n")
+        aux.delete("\r")
+        aux.size.times do 
+            aux_2.push(" ")
+        end
+        
+        print @player_word
+        print aux
+        until flag
+            puts "Enter a letter:"
+            user_choise = gets.chomp
+            aux.each_with_index do |letter, index|
+                aux_2[index] = letter if letter == user_choise  
+            end
+            print aux_2
+            flag = true unless aux_2.include?(" ")
+            
+        end
         
     end
 end
