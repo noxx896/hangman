@@ -54,8 +54,7 @@ class Game
             @attempts += 1 unless aux.include?(user_choise)
                 
             aux.each_with_index do |letter, index|
-                letter.downcase
-                aux_2[index] = letter if letter == user_choise
+                aux_2[index] = letter if letter.downcase == user_choise
                     
             end
             
@@ -69,7 +68,12 @@ class Game
 
             print "- "*aux.size + "\n"
             display_hangman(@attempts)
-            flag = true unless aux_2.include?(" ")
+            if @attempts == 7 || !aux_2.include?(" ") 
+                flag = true
+                puts "YOU LOSE" if @attempts == 7
+                puts "YOU WIN!!" if !aux_2.include?(" ")
+                
+            end
             
         end
         
