@@ -1,12 +1,19 @@
 #HANGMAN GAME
+require "yaml"
 
 class Player
-    attr_reader :language
+    attr_accessor :name, :player_word, :attempts, :language
 
-    def initialize(player_name, language)
-        @player_name = player_name
-        @language = language
-        @score = 0
+    def initialize
+        @name
+        @language = "English"
+        @player_word  = ""
+        @attempts = 0
+    end
+
+    def choose_name
+        puts "Enter your name:"
+        @name = gets.chomp
     end
 
 end
@@ -17,9 +24,6 @@ class Game
 
     def initialize(player)
         @player = player
-        #@dictionary
-        #@player_word
-        @attempts = 0
     end
 
     def load_dictionary
@@ -31,31 +35,79 @@ class Game
 
     end
 
+
+    def save_game(option, word_array, aux_word_array)
+        if option.downcase == "y"
+            yaml = YAML::dump({
+                :player_name => @player.name,
+                :player_word_array => word_array,
+                :aux_word_array => aux_word_array,
+                :attempts => @player.attempts
+            })
+            if File.exists? "game_saver.yaml"
+                File.open("game_saver.yaml", "a") do |file|
+                    file.puts(yaml)
+                end
+                puts "Game saved!"
+            else
+                File.open("game_saver.yaml", "w") do |file|
+                    file.puts (yaml)
+                end
+                puts "Game saved!"
+
+            end
+        else
+            puts "Game not saved"
+        end
+        
+    end
+
+    def load_game
+        puts "Enter player name:"
+        name = gets.chomp
+        players = YAML::load_stream(File.read "game_saver.yaml")
+        bandera = true
+        players.each do |player|
+            return player[:player_word_array], player[:aux_word_array], player[:attempts] if player[:player_name] == name
+        end
+    end
+
     def play
         flag = false
         aux_2 = []
 
         load_dictionary
-        @player_word = @dictionary.sample
-        aux = @player_word.split("")
+        @player.player_word = @dictionary.sample
+        aux = @player.player_word.split("")
         aux.delete("\n")
         aux.delete("\r")
 
         aux.size.times do 
-            aux_2.push(" ")
+           aux_2.push("_")
         end
         
+        print "antes 1 #{aux}\n antes 2 #{aux_2}"
+    
         print @player_word
-        print "#{aux}\n"
-
+        puts "Do you want to star new game or load game?\tn/l"
+        case start = gets.chomp
+            when "n" then @player.choose_name
+            when "l" then aux, aux_2 ,@player.attempts= load_game
+            else @player.choose_name
+        end
+        print "primer #{aux}\nsegundo #{aux_2}"
         until flag
+            print "Do you want to save the current game?\ty/n\n"
+            save_current_game = gets.chomp
+            save_game(save_current_game, aux, aux_2)
+
             print "\nEnter a letter: "
             user_choise = gets.chomp
-            @attempts += 1 unless aux.include?(user_choise)
-                
+            @player.attempts += 1 unless aux.include?(user_choise)
+
             aux.each_with_index do |letter, index|
-                aux_2[index] = letter if letter.downcase == user_choise
-                    
+                aux_2[index] = letter if letter.downcase == user_choise                
+
             end
             
             aux_2.each_with_index do |letter, index|
@@ -66,12 +118,12 @@ class Game
                 end
             end
 
-            print "- "*aux.size + "\n"
-            display_hangman(@attempts)
-            if @attempts == 7 || !aux_2.include?(" ") 
+            #print "- "*aux.size + "\n"
+            display_hangman(@player.attempts)
+            if @player.attempts == 7 || !aux_2.include?("_") 
                 flag = true
-                puts "YOU LOSE" if @attempts == 7
-                puts "YOU WIN!!" if !aux_2.include?(" ")
+                puts "YOU LOSE" if @player.attempts == 7
+                puts "YOU WIN!!" if !aux_2.include?("_")
                 
             end
             
@@ -182,13 +234,12 @@ class Game
                     " |" + " "*12 + "/" + " "*5 + 92.chr,
                     " |" + " "*11 + "/" + " "*7 + 92.chr
 
-            else puts " Unknown #{player_attempts.class} #{player_attempts}"
-
+            else puts "Unknown"
         end
 
     end
 end
 
-player = Player.new("n0xx", "English")
+player = Player.new
 game = Game.new(player)
 game.play
