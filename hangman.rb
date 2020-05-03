@@ -37,6 +37,8 @@ class Game
 
 
     def save_game(option, word_array, aux_word_array)
+        flag = false
+        a = 0
         if option.downcase == "y"
             yaml = YAML::dump({
                 :player_name => @player.name,
@@ -45,8 +47,30 @@ class Game
                 :attempts => @player.attempts
             })
             if File.exists? "game_saver.yaml"
-                File.open("game_saver.yaml", "a") do |file|
-                    file.puts(yaml)
+                players = YAML::load_stream(File.read "game_saver.yaml")
+                players.each_with_index  do |player, index|
+                    if player[:player_name] == @player.name 
+                        flag = true
+                        a = index
+                    end
+                end
+                if flag
+                    puts "se encontro nombre #{a}"
+                    players[a][:aux_word_array] = aux_word_array
+                    players[a][:attempts] = @player.attempts
+                    File.open("game_saver.yaml", "w") do |file|
+                        players.each do |player|
+                            file.puts (YAML::dump(player))
+                        end
+                    end
+                    print players[0]
+                else
+                    puts "no se encontro nombre"
+                    puts @player.name
+                    File.open("game_saver.yaml", "a") do |file|
+                        file.puts(yaml)
+                    end
+
                 end
                 puts "Game saved!"
             else
@@ -68,7 +92,7 @@ class Game
         players = YAML::load_stream(File.read "game_saver.yaml")
         bandera = true
         players.each do |player|
-            return player[:player_word_array], player[:aux_word_array], player[:attempts] if player[:player_name] == name
+            return player[:player_word_array], player[:aux_word_array], player[:player_name], player[:attempts] if player[:player_name] == name
         end
     end
 
@@ -92,7 +116,7 @@ class Game
         puts "Do you want to star new game or load game?\tn/l"
         case start = gets.chomp
             when "n" then @player.choose_name
-            when "l" then aux, aux_2 ,@player.attempts= load_game
+            when "l" then aux, aux_2 , @player.name, @player.attempts= load_game
             else @player.choose_name
         end
         print "primer #{aux}\nsegundo #{aux_2}"
